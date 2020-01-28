@@ -1,43 +1,48 @@
 module Main where
 
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Char8 as BC
+--import Network.HTTP.Conduit
+import Network.Wreq
+import Control.Lens
+import Text.HTML.Parser
 import qualified Data.ByteString.Lazy as L
-import qualified Data.ByteString.Lazy.Char8 as LC
-import Network.HTTP.Simple
-import Data.Text
-import Data.Text.Internal.Search
-import Data.List (findIndex)
+--import qualified Data.ByteString.Char8 as LC
+--import qualified Data.ByteString.Internal as BS (c2w,w2c)
+import qualified Data.Text.Lazy.Encoding as LTE (decodeUtf8)
+import qualified Data.Text.Lazy.IO as IO (putStrLn,writeFile)
+import qualified Data.Text as T 
+import qualified Data.Text.Lazy as LT (append,pack,unpack)
+import Data.Char (chr)
 
-redditDomain :: BC.ByteString
-redditDomain = "www.reddit.com"
+--openURL :: String -> IO String
+--openURL x = (map BS.w2c) .  L.unpack <$> simpleHttp x
 
-path :: BC.ByteString
-path = "/r/LegionFX"
-
-
-japanHost = "www.japantimes.co.jp"
-japanPath = "/news/2020/01/22/national/politics-diplomacy/opposition-shinzo-abe-scandals-diet-japan/"
-
-buildRequest token host method path   = setRequestMethod method
-                                  $  setRequestHost host
-                                  $  setRequestHeader "token" [token]
-                                  $  setRequestPath path
-                                  $  setRequestSecure True
-                                  $  setRequestPort 443
-                                  $  defaultRequest
-
-request :: Request
-request = buildRequest "" japanHost "GET" japanPath
+spjPapers :: IO ()
+spjPapers = do
+  
+        --let url = "http://research.microsoft.com/en-us/people/simonpj/"
+        let url = "https://www.yomiuri.co.jp/national/20200128-OYT1T50285/"
+        --let url = "https://www.yomiuri.co.jp/world/20200129-OYT1T50107/"
+        --let url = "https://www.yomiuri.co.jp/hobby/atcars/impression/20200123-OYT8T50020/"
+        response <- get url
+        let body = response ^. responseBody :: L.ByteString
+        let tokens = parseTokensLazy decodedBody where
+                     decodedBody = LTE.decodeUtf8 body
+        let parsedHtml = LT.append  (renderTokens article) (LT.pack "</article>")
+                    where 
+                      article = takeWhile((/=) endToken) dropped
+                      dropped = dropWhile ((/=) beginToken) tokens 
+                      beginToken = TagOpen tagName [Attr (T.pack "class") (T.pack "article-content")]
+                      endToken = TagClose tagName
+                      tagName = T.pack "article" :: TagName
+        let unpacked = LT.unpack $ parsedHtml 
+        IO.writeFile "article3.html" parsedHtml
+        putStrLn unpacked
+        --writeFile "article2.html" article
+        --let links = map f $ sections (~== "<A>") $
+        --            takeWhile (~/= "<a name=haskell>") $
+        --            drop 5 $ dropWhile (~/= "<a name=current>") tags
+        --mapM_ putStrLn links
+        --putStr $ unlines links
 
 main :: IO ()
-main = do
-       jsonBody <- LC.readFile "data.json"
-       let strictBody = LC.toStrict jsonBody
-       let broken = articleWithEndingTag where
-                  articleWithEndingTag = BC.append article "</article>"
-                  article = fst $ BC.breakSubstring "</article>" firstPart
-                  firstPart = snd $ BC.breakSubstring "<article" strictBody 
-       
-       BC.putStrLn broken
-       BC.writeFile "article.html" broken
+main = spjPapers
