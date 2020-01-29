@@ -1,16 +1,14 @@
 module Main where
 
---import Network.HTTP.Conduit
 import Network.Wreq
 import Control.Lens
 import Text.HTML.Parser
 import qualified Data.ByteString.Lazy as L
---import qualified Data.ByteString.Char8 as LC
---import qualified Data.ByteString.Internal as BS (c2w,w2c)
 import qualified Data.Text.Lazy.Encoding as LTE (decodeUtf8)
 import qualified Data.Text.Lazy.IO as IO (putStrLn,writeFile)
 import qualified Data.Text as T 
-import qualified Data.List as List (find,tails)
+import qualified Data.List as List (find,inits)
+import Data.Maybe (fromJust)
 import qualified Data.Text.Lazy as LT (append,pack,unpack)
 import Data.Char (chr)
 
@@ -26,9 +24,9 @@ filterTokens tagsTuples tokens = concat nestedList where
                            filterFunction = (map (uncurry $ filterToken) tagsTuples)
 
 filterToken :: TagName -> [Attr] -> [Token] -> [Token]
-filterToken tagname attr tokens = maybe filtered ++ [TagClose tagname] where
-                      filtered   = List.find (\x -> (foldr (countToken tagname) 0) == 0) withoutHead 
-                      withoutHead = List.tails (drop 1 dropped)
+filterToken tagname attr tokens = fromJust (List.find (\x -> mapping x == 0) withoutHead) where
+                      mapping   = (foldr (countToken tagname) 0)
+                      withoutHead = drop 1 $ List.inits dropped
                       dropped    = dropWhile ((/=) beginToken) tokens 
                       beginToken = TagOpen tagname attr
                       endToken   = TagClose tagname
@@ -59,8 +57,7 @@ spjPapers = do
         let body = response ^. responseBody :: L.ByteString
         let tokens = parseTokensLazy decodedBody where
                      decodedBody = LTE.decodeUtf8 body
-        let parsedHtml = renderTokens article
-                    where 
+        let parsedHtml = renderTokens article where 
                       article = filterTokens filterTest tokens 
         let unpacked = LT.unpack $ parsedHtml 
         --IO.writeFile "article3.html" parsedHtml
