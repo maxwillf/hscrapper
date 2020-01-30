@@ -13,6 +13,26 @@ import qualified Data.Text.Lazy as LT (append,pack,unpack)
 import Data.Char (chr)
 
 
+--(~==) :: Token -> Token -> Bool
+
+getLinksFromTokens :: [Token] -> [T.Text]
+getLinksFromTokens tokens = fromJust <$> (filter (\x -> x /= Nothing)) maybeLinks where
+                     maybeLinks = getLinkFromAnchorToken <$> tokens
+
+getLinkFromAnchorToken :: Token -> Maybe T.Text
+getLinkFromAnchorToken (TagOpen tagname attrs)
+  | tagname == T.pack "a" = hrefValue where
+                            hrefValue = (\(Attr x y) -> y) <$> hrefAttr
+                            hrefAttr = (List.find (\(Attr y z) -> y == T.pack "href") attrs)
+getLinkFromAnchorToken _ = Nothing 
+
+filterAnchors :: [Token] -> [Token]
+filterAnchors tokens = filter isAnchor tokens
+
+isAnchor :: Token -> Bool
+isAnchor (TagOpen tagname attrs) = tagname == T.pack "a"
+isAnchor _ = False
+
 filterTest :: [(TagName,[Attr])]
 filterTest = [
   (stringToTagName "div", stringToAttr "class" "article-header"),
@@ -43,8 +63,6 @@ stringToAttr attr values = [Attr (T.pack attr) (T.pack values)]
 
 stringToTagName :: String -> TagName
 stringToTagName str = T.pack str
-
---tupleToToken :: (TagName,[Attr])
 
 spjPapers :: IO ()
 spjPapers = do

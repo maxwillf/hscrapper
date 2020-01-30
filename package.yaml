@@ -35,6 +35,12 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - http
+    - bytestring
+    - text
+    - html-parse
+    - wreq
+    - lens 
+    - binary
 
 tests:
   http-test:
