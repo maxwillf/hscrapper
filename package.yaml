@@ -41,6 +41,7 @@ executables:
     - wreq
     - lens 
     - binary
+    default-extensions: OverloadedStrings
 
 tests:
   http-test:
