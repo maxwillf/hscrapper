@@ -41,7 +41,8 @@ executables:
     - wreq
     - lens 
     - binary
-    default-extensions: OverloadedStrings
+    - yaml
+    default-extensions: OverloadedStrings, DeriveGeneric
 
 tests:
   http-test:
