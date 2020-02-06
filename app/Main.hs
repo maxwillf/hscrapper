@@ -101,17 +101,17 @@ data Tag = Tag {
 
 data Config = Config {
   domain :: String,
-  scrapperItens :: [Tag]
+  scrapperItens :: Maybe [Tag],
+  articleItens  :: Maybe [Tag]
 } deriving (Show,Generic)
 
-instance FromJSON Tag
-
+instance FromJSON Tag 
 instance FromJSON Config
 
 main :: IO ()
 main = do
-  file <- decodeFile "scrapper.yaml" :: IO (Maybe Config)
-  print (scrapperItens <$> file)
+  file <- decodeFile "scrapper.yaml" :: IO (Maybe [Config])
+  print (file)
   return ()
         -- let crawlingPath = "https://www.yomiuri.co.jp/news/" 
         -- response <- get crawlingPath

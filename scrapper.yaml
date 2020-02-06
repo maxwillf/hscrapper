@@ -1,0 +1,31 @@
+- domain: https://www.yomiuri.co.jp/news/
+  scrapperItens:
+    - tag: li
+      attrName: class
+      attrVal: p-list-item
+    - tag: li
+      attrName: class
+      attrVal: p-list-item p-list-item--small-thumb
+  articleItens:
+    - tag: div
+      attrName: class
+      attrVal: article-header
+    - tag: div
+      attrName: class
+      attrVal: p-main-contents
+
+- domain: https://www.yomiuri.co.jp/news/
+  scrapperItens:
+    - tag: li
+      attrName: class
+      attrVal: p-list-item
+    - tag: li
+      attrName: class
+      attrVal: p-list-item p-list-item--small-thumb
+  articleItens:
+    - tag: div
+      attrName: class
+      attrVal: article-header
+    - tag: div
+      attrName: class
+      attrVal: p-main-contents
