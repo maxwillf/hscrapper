@@ -3,6 +3,7 @@
 module Main where
 
 import GHC.Generics
+import Network.HTTP.Client (HttpException (..))
 import Network.Wreq
 import Control.Lens
 import Text.HTML.Parser
@@ -15,6 +16,7 @@ import qualified Data.List as List (find,inits,tails,findIndex,zip)
 import Data.Maybe (fromJust)
 import qualified Data.Text.Lazy as LT (append,pack,unpack,toStrict)
 import Data.Bitraversable  as BI (bitraverse)
+import Control.Exception as E
 
 import Data.Yaml
 import Data.Aeson.Types (prependFailure,typeMismatch)
@@ -126,6 +128,7 @@ correctDomain :: T.Text -> T.Text -> T.Text
 correctDomain domain url 
   | T.isPrefixOf "http" url = url
 correctDomain domain url = T.append domain url
+
 -- requests all scrapped anchor links if there are any scrapItens and returns the same page if there aren't
 parseWithConfig :: (Config,Response L.ByteString) ->  IO ([Token],Config)
 parseWithConfig (Config domain spage [] articleFilters outputFilename,response) =
@@ -135,46 +138,21 @@ parseWithConfig (Config domain spage scrap articleFilters outputFilename,respons
    BI.bitraverse id pure (filteredResponses,Config domain spage scrap articleFilters outputFilename) where
    filteredResponses = (concatMap (responseToFilteredTokens tagTuples)) <$> responses
    tagTuples = tagToTagnameAttrTuple <$> articleFilters
-   responses = sequence (get <$> (T.unpack <$> links))  :: IO [Response L.ByteString]
+   responses = sequence ((getWith noExceptions) <$> (T.unpack <$> links))  :: IO [Response L.ByteString]
    links = map (correctDomain (T.pack domain)) (getLinksFromTokens filteredTokens)
    filteredTokens = (responseToFilteredTokens filterTags response)
    filterTags = tagToTagnameAttrTuple <$> scrap
 
+noExceptions :: Options
+noExceptions = defaults & checkResponse .~ (Just $ \_ _ -> return ())
+
 main :: IO ()
 main = do
-  file <- decodeFileEither "scrapper.yaml" :: IO (Either ParseException [Config])
-  let configs = unwrapConfig file
-  let startingPages = startingPage <$> configs
-  -- responses :: IO [Response L.ByteString]
-  let responses = sequence(get <$> startingPages)
-  resps <- responses
-  -- let comprehension = [() <- configs]
-  print configs
-  parsed <- sequence $ parseWithConfig <$> (zip configs resps)
-  mapM_ writeWithConfig (parsed)
-  putStrLn ""
-  return ()
-        -- let crawlingPath = "https://www.yomiuri.co.jp/news/" 
-        -- response <- get crawlingPath
-        -- let filteredTokens = (responseToFilteredTokens crawlingFilterTags response)
-        -- let crawlingLinks = getLinksFromTokens filteredTokens
-        -- mapM_ TIO.putStrLn crawlingLinks
-        -- IO.putStrLn (renderTokens filteredTokens)
-        -- responses <- (sequence) (get <$> (map T.unpack crawlingLinks))
-        -- let scrapped = map (renderTokens . responseToFilteredTokens articlesFilterTags ) responses
-
- --       L.writeFile (T.unpack . head $ crawlingLinks) "fdsajk"
-        --let rendered = map (renderTokens) scrapped
-        --mapM_ (L.appendFile "yomiuri.html") (map LTE.encodeUtf8 scrapped)
-
--- articlesFilterTags :: [(TagName,[Attr])]
--- articlesFilterTags = [
---   ("div", [Attr "class" "article-header"]),
---   ("div", [Attr "class" "p-main-contents"])]
-
--- crawlingFilterTags :: [(TagName,[Attr])]  -- | tagname == "a" = domain ++ hrefValue where
--- crawlingFilterTags = [  --                           hrefValue = (\(Attr x y) -> y) <$> hrefAttr
---   -- ("h3" , [Attr "class" "c-list-title"])  --                           hrefAttr = (List.find (\(Attr y z) -> y == "href") attrs)
---     ("li", [Attr "class" "p-list-item  "]),
---     ("li", [Attr "class" "p-list-item p-list-item--small-thumb "])
---    ]
+    file <- decodeFileEither "scrapper.yaml" :: IO (Either ParseException [Config])
+    let configs = unwrapConfig file
+    let startingPages = startingPage <$> configs
+    -- responses :: IO [Response L.ByteString]
+    responses <- sequence (get <$> startingPages)
+    print configs
+    parsed <- sequence $ parseWithConfig <$> (zip configs responses)
+    mapM_ writeWithConfig (parsed)
