@@ -21,6 +21,16 @@ description: Please see the README on GitHub at <https://github.com/githubuser/h
 
 dependencies:
   - base >= 4.7 && < 5
+  - http-client
+  - bytestring
+  - text
+  - html-parse
+  - wreq
+  - lens
+  - binary
+  - yaml
+  - aeson
+default-extensions: OverloadedStrings, DeriveGeneric
 
 library:
   source-dirs: src
@@ -35,16 +45,6 @@ executables:
       - -with-rtsopts=-N
     dependencies:
       - http
-      - http-client
-      - bytestring
-      - text
-      - html-parse
-      - wreq
-      - lens
-      - binary
-      - yaml
-      - aeson
-    default-extensions: OverloadedStrings, DeriveGeneric
 
 tests:
   http-test:
