@@ -6,6 +6,7 @@ module Lib
       writeWithConfig
     ) where
 
+import System.Directory (doesFileExist)
 import GHC.Generics
 import Network.HTTP.Client (HttpException (..))
 import Network.Wreq
@@ -120,8 +121,12 @@ tagToTagnameAttrTuple tagVar = (tagName, attributes) where
                                attributes = [ attrToAttr attribute | attribute <- (attr tagVar)]
 
 
-writeWithConfig :: ([Token],Config) ->  IO ()
-writeWithConfig (tokens,config) = L.appendFile (outputFilename config) (LTE.encodeUtf8 $ renderTokens tokens)
+writeWithConfig :: String -> ([Token],Config) ->  IO ()
+writeWithConfig outputDir (tokens,config) = do 
+  fileExists <- doesFileExist filePath 
+  if fileExists then L.appendFile (filePath) (LTE.encodeUtf8 $ renderTokens tokens) 
+  else L.writeFile (filePath) (LTE.encodeUtf8 $ renderTokens tokens) where
+  filePath = outputDir ++ "/" ++ outputFilename config
 
 
 correctDomain :: T.Text -> T.Text -> T.Text 

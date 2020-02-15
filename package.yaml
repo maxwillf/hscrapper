@@ -1,6 +1,6 @@
-name: http
+name: hscrapper
 version: 0.1.0.0
-github: "githubuser/http"
+github: "githubuser/hscrapper"
 license: BSD3
 author: "Author name here"
 maintainer: "example@example.com"
@@ -30,13 +30,15 @@ dependencies:
   - binary
   - yaml
   - aeson
+  - optparse-applicative
+  - directory
 default-extensions: OverloadedStrings, DeriveGeneric
 
 library:
   source-dirs: src
 
 executables:
-  http-exe:
+  hscrapper-exe:
     main: Main.hs
     source-dirs: app
     ghc-options:
@@ -44,10 +46,10 @@ executables:
       - -rtsopts
       - -with-rtsopts=-N
     dependencies:
-      - http
+      - hscrapper
 
 tests:
-  http-test:
+  hscrapper-test:
     main: Spec.hs
     source-dirs: test
     ghc-options:
@@ -55,4 +57,4 @@ tests:
       - -rtsopts
       - -with-rtsopts=-N
     dependencies:
-      - http
+      - hscrapper
