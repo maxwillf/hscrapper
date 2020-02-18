@@ -1,4 +1,4 @@
-module Lib
+module Hscrapper 
     ( 
       unwrapConfig,
       Config(..),
@@ -93,8 +93,8 @@ data Tag = Tag {
 data Config = Config {
   domain :: String,
   startingPage :: String,
-  scrapperItens :: [Tag],
-  articleItens  :: [Tag],
+  hookItens :: [Tag],
+  contentItens  :: [Tag],
   outputFilename :: String 
 } deriving (Show,Generic)
 
@@ -104,11 +104,12 @@ instance FromJSON Config where
   parseJSON (Object v) = Config 
       <$> v .: "domain"
       <*> v .: "startingPage"
-      <*> v .:? "scrapperItens" .!= []
-      <*> v .:? "articleItens"  .!= []
+      <*> v .:? "hookItens" .!= []
+      <*> v .:? "contentItens"  .!= []
       <*> v .: "outputFilename" 
   parseJSON invalid = prependFailure "parsing Config failed, " 
                       (typeMismatch "Object" invalid)
+
 
 unwrapConfig :: Either ParseException [Config] -> [Config]
 unwrapConfig (Left x) = []

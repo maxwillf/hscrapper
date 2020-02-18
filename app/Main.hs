@@ -4,7 +4,7 @@ module Main where
 
 import Network.Wreq hiding (header)
 import Data.Yaml hiding (Parser)
-import Lib
+import Hscrapper 
 import Options.Applicative 
 import Data.Semigroup ((<>))
 
@@ -36,11 +36,17 @@ opts = info (argsParser <**> helper)
 main :: IO ()
 main = do
     args <- execParser opts
+    putStrLn "Parsing config file"
     file <- decodeFileEither (inputFile args) :: IO (Either ParseException [Config])
     let configs = unwrapConfig file
-    let startingPages = startingPage <$> configs
-    -- responses :: IO [Response L.ByteString]
-    responses <- sequence (get <$> startingPages)
-    print configs
-    parsed <- sequence $ parseWithConfig <$> (zip configs responses)
-    mapM_ (writeWithConfig $ outputDir args) (parsed)
+    if null configs then putStrLn "Badly formed yaml configuration file"
+    else do 
+      putStrLn "Scrapping starter pages"
+      let startingPages = startingPage <$> configs
+      -- responses :: IO [Response L.ByteString]
+      responses <- sequence (get <$> startingPages)
+      putStrLn "Scrapping target pages"
+      parsed <- sequence $ parseWithConfig <$> (zip configs responses)
+      putStrLn "Writing results to output directories"
+      mapM_ (writeWithConfig $ outputDir args) (parsed)
+      putStrLn "Done"
